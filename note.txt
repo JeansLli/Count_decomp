@@ -1,0 +1,2 @@
+When we use Cython, we should first complie it:
+python setup.py build_ext --inplace
