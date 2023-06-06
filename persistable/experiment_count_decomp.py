@@ -9,6 +9,7 @@ from persistable.persistable import _HierarchicalClustering, _MetricSpace
 from persistable.signed_betti_numbers import signed_betti
 
 
+
 def creat_random_points(x_range,y_range,N):
     # output is a (N,2) array
     points = np.random.rand(N,2)

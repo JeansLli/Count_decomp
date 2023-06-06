@@ -92,6 +92,10 @@ max_radius = ss[-1]
 min_degree = ks[-1]*num_points-1
 ms = _MetricSpace(points, "minkowski")
 s_neighbors = ms._nn_tree.query_radius(ms._points, max_radius)
+dist_metric = ms._dist_metric
+print("points = ",points)
+pdb.set_trace()
+print("dist_metric = ",dist_metric)
 edges = []
 
 for i in range(ms.size()):
@@ -105,7 +109,7 @@ edges = np.array(edges, dtype=int) # edges.shape=(E,2); edges[i]=(p_id,q_id)
 
 
 filtered_points, filtered_edges =  filter_graph(points, edges, min_degree)
-print("filtered_points\n",filtered_points)
+#print("filtered_points\n",filtered_points)
 
 num_filtered_points = filtered_points.shape[0]
 
