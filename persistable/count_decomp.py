@@ -113,6 +113,8 @@ filtered_points, filtered_edges =  filter_graph(points, edges, min_degree)
 
 num_filtered_points = filtered_points.shape[0]
 
+
+#TODO: input distance matrix
 rips_complex = gudhi.RipsComplex(points=filtered_points,max_edge_length=max_radius) # max_edge_length is the radius of the ball
 simplex_tree = rips_complex.create_simplex_tree(max_dimension=num_filtered_points)
 #simplex_tree = rips_complex.create_simplex_tree(max_dimension=1)
