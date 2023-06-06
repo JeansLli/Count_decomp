@@ -1,0 +1,2 @@
+include *.md pyproject.toml LICENSE requirements.txt
+recursive-include persistable *.py *.pyx *.pxd *.c *.css *.ico
