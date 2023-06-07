@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import gudhi
+import gudhi as gd
 import pdb
 import networkx as nx
 
@@ -57,7 +57,7 @@ def run_experiments(n_batch, x_range, y_range, num_points, ss, ks):
         points = creat_random_points(x_range,y_range,num_points)
 
         # Compute the signed Betti barcode
-        p = Persistable(points)
+        p = Persistable(points,metric="minkowski")
         bf = p._bifiltration
         hf = bf._hilbert_function(ss, ks, reduced=False, n_jobs=4)
         sb = signed_betti(hf)
@@ -80,42 +80,77 @@ def run_experiments(n_batch, x_range, y_range, num_points, ss, ks):
 
         edges = np.array(edges, dtype=int) # edges.shape=(E,2); edges[i]=(p_id,q_id)
 
-        filtered_points, _ =  filter_graph(points, edges, min_degree)
+        filtered_points, filtered_edges =  filter_graph(points, edges, min_degree)
         num_filtered_points = filtered_points.shape[0]
-        rips_complex = gudhi.RipsComplex(points=filtered_points,max_edge_length=max_radius) # max_edge_length is the radius of the ball
-        simplex_tree = rips_complex.create_simplex_tree(max_dimension=num_filtered_points)
+        simplex_tree = gd.SimplexTree()
+        for edge in filtered_edges:
+            simplex_tree.insert(edge)
+        
+        simplex_tree.expansion(num_filtered_points)
 
         n_filter_pts.append(simplex_tree.num_vertices())
         n_simplies.append(simplex_tree.num_simplices())
     return n_filter_pts, n_simplies, n_signed_bars
     
 
+def draw_plot(x,y):
+    plt.figure(figsize=(10, 8))
+    plt.scatter(x, y)
+
+    # Find min and max values
+    xmin, xmax = np.min(x), np.max(x)
+    ymin, ymax = np.min(y), np.max(y)
+
+    # Annotate min and max values for x
+    plt.annotate(f'Min x: {xmin}', xy=(xmin, ymin), xytext=(xmin-0.1, ymin), 
+             arrowprops=dict(facecolor='blue', shrink=0.05), horizontalalignment='right')
+    #plt.annotate(f'Max x: {xmax}', xy=(xmax, ymax), xytext=(xmax+0.1, ymax), 
+    #         arrowprops=dict(facecolor='red', shrink=0.05), horizontalalignment='left')
+
+    # Annotate min and max values for y
+    #plt.annotate(f'Min y: {ymin}', xy=(xmin, ymin), xytext=(xmin, ymin-0.1), 
+    #         arrowprops=dict(facecolor='green', shrink=0.05), verticalalignment='top')
+    plt.annotate(f'Max y: {ymax}', xy=(xmax, ymax), xytext=(xmax, ymax+0.1), 
+             arrowprops=dict(facecolor='orange', shrink=0.05), verticalalignment='bottom')
+
+    # Set x and y axis titles
+    plt.xlabel('n_simplies')
+    plt.ylabel('n_signed_bars')
+    # Draw the line y=x
+    #line_x = np.linspace(plt.xlim()[0], plt.xlim()[1], 100)
+    #plt.plot(line_x, line_x, 'k--')
+
+    #plt.xlim([xmin-1, xmax+1])
+    #plt.ylim([ymin-1, ymax+1])
+
+    #plt.grid(True)
+    plt.show()
 
 x_range=10
 y_range=10
 num_points=20
 ss = [0, 0.5, 1, 1.5, 2, 2.5, 3] #radius_scale
 ks = [1, 3 / 4, 1 / 2, 1/4] #degree
-n_filter_pts, n_simplies, n_signed_bars = run_experiments(1000, x_range, y_range, num_points, ss, ks)
+n_filter_pts, n_simplies, n_signed_bars = run_experiments(300, x_range, y_range, num_points, ss, ks)
 
+
+draw_plot(n_simplies,n_signed_bars)
 #print("n_filter_pts",n_filter_pts)
 #print("n_simplies",n_simplies)
 #print("n_signed_bars",n_signed_bars)
 
 # Create a figure and a set of subplots
-fig, axs = plt.subplots(2, figsize=(10, 8)) 
+#fig, axs = plt.subplots(2, figsize=(10, 8)) 
 
 # Plot y1 against x on the first subplot
-axs[0].scatter(n_filter_pts, n_signed_bars, color='blue')
-#axs[0].set_title('n_signed_bars: n_pts')
-axs[0].set_xlabel('n_pts')
-axs[0].set_ylabel('n_signed_bars')
+#axs[0].scatter(n_filter_pts, n_signed_bars, color='blue')
+#axs[0].set_xlabel('n_pts')
+#axs[0].set_ylabel('n_signed_bars')
 
 # Plot y2 against x on the second subplot
-axs[1].scatter(n_simplies, n_signed_bars, color='orange')
-#axs[1].set_title('n_signed_bars: n_simplies')
-axs[1].set_xlabel('n_simplies')
-axs[1].set_ylabel('n_signed_bars')
+#axs[1].scatter(n_simplies, n_signed_bars, color='orange')
+#axs[1].set_xlabel('n_simplies')
+#axs[1].set_ylabel('n_signed_bars')
 
 
 plt.show()

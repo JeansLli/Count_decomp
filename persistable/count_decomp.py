@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import gudhi
 import pdb
 import networkx as nx
+import gudhi as gd
 
 from persistable import Persistable
 from persistable.persistable import _HierarchicalClustering, _MetricSpace
@@ -61,7 +62,7 @@ plt.show()
 
 # Compute the hilbert function
 ss = [0, 0.5, 1, 1.5, 2, 2.5, 3] #radius_scale
-ks = [1, 3 / 4, 1 / 2, 1/4] #degree
+ks = [1, 3 / 4, 1 / 2, 1/4, 0] #degree
 
 p = Persistable(points)
 bf = p._bifiltration
@@ -92,10 +93,7 @@ max_radius = ss[-1]
 min_degree = ks[-1]*num_points-1
 ms = _MetricSpace(points, "minkowski")
 s_neighbors = ms._nn_tree.query_radius(ms._points, max_radius)
-dist_metric = ms._dist_metric
-print("points = ",points)
-pdb.set_trace()
-print("dist_metric = ",dist_metric)
+
 edges = []
 
 for i in range(ms.size()):
@@ -110,25 +108,35 @@ edges = np.array(edges, dtype=int) # edges.shape=(E,2); edges[i]=(p_id,q_id)
 
 filtered_points, filtered_edges =  filter_graph(points, edges, min_degree)
 #print("filtered_points\n",filtered_points)
+#print("filtered_edges\n", filtered_edges)
 
 num_filtered_points = filtered_points.shape[0]
 
 
-#TODO: input distance matrix
-rips_complex = gudhi.RipsComplex(points=filtered_points,max_edge_length=max_radius) # max_edge_length is the radius of the ball
-simplex_tree = rips_complex.create_simplex_tree(max_dimension=num_filtered_points)
-#simplex_tree = rips_complex.create_simplex_tree(max_dimension=1)
+
+simplex_tree = gd.SimplexTree()
+for edge in filtered_edges:
+    simplex_tree.insert(edge)
+simplex_tree.expansion(filtered_points.shape[0])
 fmt = '%s -> %.2f'
-cnt=0
-for filtered_value in simplex_tree.get_filtration():
-    print(fmt % tuple(filtered_value))
-    cnt+=1
+
+#print("simplex tree is ")
+#for filtered_value in simplex_tree.get_filtration():
+#    print(fmt % tuple(filtered_value))
+
 
 
 result_str = 'Rips complex is of dimension ' + repr(simplex_tree.dimension()) + ' - ' + \
     repr(simplex_tree.num_simplices()) + ' simplices - ' + \
     repr(simplex_tree.num_vertices()) + ' vertices.'
 print(result_str)
+print("filtered_points.shape ",filtered_points.shape)
+print("filtered_edges.shape ",filtered_edges.shape)
+cnt=0
+for simplex in simplex_tree.get_skeleton(1):
+    if len(simplex[0]) == 2:  # only print simplices with 2 vertices (edges)
+        cnt+=1
+print("num edges = ",cnt)
 
 
 
