@@ -103,18 +103,6 @@ def draw_plot(x,y,x_name,y_name,line_k,time,title_name):
     xmin, xmax = np.min(x), np.max(x)
     ymin, ymax = np.min(y), np.max(y)
 
-    # Annotate min and max values for x
-    #plt.annotate(f'Min x: {xmin}', xy=(xmin, ymin), xytext=(xmin-0.1, ymin), 
-    #         arrowprops=dict(facecolor='blue', shrink=0.05), horizontalalignment='right')
-    #plt.annotate(f'Max x: {xmax}', xy=(xmax, ymax), xytext=(xmax+0.1, ymax), 
-    #         arrowprops=dict(facecolor='red', shrink=0.05), horizontalalignment='left')
-
-    # Annotate min and max values for y
-    #plt.annotate(f'Min y: {ymin}', xy=(xmin, ymin), xytext=(xmin, ymin-0.1), 
-    #         arrowprops=dict(facecolor='green', shrink=0.05), verticalalignment='top')
-    #plt.annotate(f'Max y: {ymax}', xy=(xmax, ymax), xytext=(xmax, ymax+0.1), 
-    #         arrowprops=dict(facecolor='orange', shrink=0.05), verticalalignment='bottom')
-
     # Set x and y axis titles
     plt.xlabel(x_name)
     plt.ylabel(y_name)
@@ -162,22 +150,4 @@ log_n_simplices = np.log(n_simplices_array)
 log_n_simplices_list = list(log_n_simplices)
 
 draw_plot(log_n_simplices_list,n_signed_bars,'log(n_simplices)','n_bars',5, time_string,title_name)
-#print("n_filter_pts",n_filter_pts)
-#print("n_simplices",n_simplices)
-#print("n_signed_bars",n_signed_bars)
 
-# Create a figure and a set of subplots
-#fig, axs = plt.subplots(2, figsize=(10, 8)) 
-
-# Plot y1 against x on the first subplot
-#axs[0].scatter(n_filter_pts, n_signed_bars, color='blue')
-#axs[0].set_xlabel('n_pts')
-#axs[0].set_ylabel('n_signed_bars')
-
-# Plot y2 against x on the second subplot
-#axs[1].scatter(n_simplies, n_signed_bars, color='orange')
-#axs[1].set_xlabel('n_simplies')
-#axs[1].set_ylabel('n_signed_bars')
-
-
-plt.show()

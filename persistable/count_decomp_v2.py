@@ -4,6 +4,7 @@ import gudhi
 import pdb
 import networkx as nx
 import gudhi as gd
+import math
 
 from persistable import Persistable
 from persistable.persistable import _HierarchicalClustering, _MetricSpace
@@ -49,19 +50,15 @@ def filter_graph(points, edges, s):
 
 
 # Create the data
-num_points = 15
+num_points = 20
 x_range = 10
 y_range = 10
 points = creat_random_points(x_range,y_range,num_points)
 
-# Plot the data
-plt.figure(figsize=(10,10))
-plt.scatter(points[:,0], points[:,1], alpha=0.5)
-plt.show()
 
 
 # Compute the hilbert function
-ss = [0, 0.5, 1, 1.5, 2, 2.5, 3] #radius_scale
+ss = [0, 0.5, 1, 1.5, 2, 2.5, 3, 20] #radius_scale
 ks = [1, 3 / 4, 1 / 2, 1/4, 0] #degree
 
 p = Persistable(points)
@@ -102,8 +99,8 @@ for i in range(ms.size()):
             edges.append([i, j])
 
 edges = np.array(edges, dtype=int) # edges.shape=(E,2); edges[i]=(p_id,q_id)
-#print("edges =",edges.shape)
-#print("the radius is ",max_radius)
+print("num edges =",edges.shape[0])
+print("num points = ",num_points)
 
 
 filtered_points, filtered_edges =  filter_graph(points, edges, min_degree)
@@ -117,9 +114,11 @@ num_filtered_points = filtered_points.shape[0]
 simplex_tree = gd.SimplexTree()
 for edge in filtered_edges:
     simplex_tree.insert(edge)
-simplex_tree.expansion(filtered_points.shape[0])
-fmt = '%s -> %.2f'
 
+print("filtered_points.shape ",filtered_points.shape[0])
+simplex_tree.expansion(filtered_points.shape[0])
+
+fmt = '%s -> %.2f'
 #print("simplex tree is ")
 #for filtered_value in simplex_tree.get_filtration():
 #    print(fmt % tuple(filtered_value))
@@ -130,13 +129,14 @@ result_str = 'Rips complex is of dimension ' + repr(simplex_tree.dimension()) + 
     repr(simplex_tree.num_simplices()) + ' simplices - ' + \
     repr(simplex_tree.num_vertices()) + ' vertices.'
 print(result_str)
-print("filtered_points.shape ",filtered_points.shape)
+print("2^n-1 = ",math.pow(2,num_filtered_points)-1)
+
 print("filtered_edges.shape ",filtered_edges.shape)
+print("Cn2 = ",num_filtered_points*(num_filtered_points-1)/2)
 cnt=0
 for simplex in simplex_tree.get_skeleton(1):
     if len(simplex[0]) == 2:  # only print simplices with 2 vertices (edges)
         cnt+=1
-print("num edges = ",cnt)
 
 
 
@@ -147,5 +147,5 @@ print("num edges = ",cnt)
 
 #print("number of positive bars in the signed Betti barcode =",num_pos_bar)
 #print("number of negative bars in the signed Betti barcode =",num_neg_bar)
-print("number of bars in the signed Betti barcode =",num_bars)
-print("#simplices / #bars =",simplex_tree.num_simplices()/num_bars)
+#print("number of bars in the signed Betti barcode =",num_bars)
+#print("#simplices / #bars =",simplex_tree.num_simplices()/num_bars)

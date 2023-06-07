@@ -2,9 +2,6 @@
 # License: 3-clause BSD
 
 
-import sys
-#sys.path.append('/home/jinli/Documents/code/persistable/persistable')
-
 from ._vineyard import Vineyard
 from .borrowed._hdbscan_boruvka import (
     KDTreeBoruvkaAlgorithm,
