@@ -135,10 +135,10 @@ def draw_plot(x,y,x_name,y_name,line_k,time,title_name):
 
 x_range=10
 y_range=10
-num_points=30
-ss = [0, 0.5, 1, 1.5, 2, 2.5, 3] #radius_scale
-ks = [1, 3 / 4, 1 / 2,1/4] #degree
-n_filter_pts, n_simplies, n_signed_bars = run_experiments(500, x_range, y_range, num_points, ss, ks)
+num_points=20
+ss = [0, 0.5, 1, 1.5, 2, 2.5, 3,10] #radius_scale
+ks = [1, 3 / 4, 1 / 2,1/4,0] #degree
+n_filter_pts, n_simplices, n_signed_bars = run_experiments(500, x_range, y_range, num_points, ss, ks)
 
 max_radius = ss[-1]
 min_degree = ks[-1]*num_points-1
@@ -151,10 +151,19 @@ title_name = str(num_points)+" initial points"+", "+ \
              "max_radius="+str(max_radius)+", "+\
              "min_degree="+str(min_degree)
 print("title_name=",title_name)
-draw_plot(n_simplies,n_signed_bars,'n_simplies','n_bars',1, time_string,title_name)
-draw_plot(n_filter_pts, n_signed_bars, 'n_pts','n_bars',1, time_string,title_name)
+
+
+
+draw_plot(n_simplices,n_signed_bars,'n_simplices','n_bars',1, time_string,title_name)
+draw_plot(n_filter_pts, n_signed_bars, 'n_pts','n_bars',3, time_string,title_name)
+
+n_simplices_array = np.array(n_simplices)
+log_n_simplices = np.log(n_simplices_array)
+log_n_simplices_list = list(log_n_simplices)
+
+draw_plot(log_n_simplices_list,n_signed_bars,'log(n_simplices)','n_bars',5, time_string,title_name)
 #print("n_filter_pts",n_filter_pts)
-#print("n_simplies",n_simplies)
+#print("n_simplices",n_simplices)
 #print("n_signed_bars",n_signed_bars)
 
 # Create a figure and a set of subplots
