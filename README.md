@@ -10,14 +10,14 @@ Then
 cd persistable
 ```
 
-The first vision is creating random points and building bifiltration on them
+## The first vision is to create random points and build bifiltrations on them. Run
 ```
 python experiment_count_decomp_v1.py
 
 ```
 The results are stored in `path-to-repository/experiment_result_v1`
 
-The second vision is fixing a simplicial complex (complete graph with n vertices) and building different bifiltrations on it
+## The second vision is to fix a simplicial complex (complete graph with n vertices) and build different bifiltrations on it. Run
 ```
 python experiment_count_decomp_v2.py
 ```
