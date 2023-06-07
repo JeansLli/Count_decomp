@@ -1,4 +1,5 @@
 # Count_decomp
+This repository is based on [Persistable](https://github.com/LuisScoccola/persistable).
 
 First, complile the Cython code
 ```
