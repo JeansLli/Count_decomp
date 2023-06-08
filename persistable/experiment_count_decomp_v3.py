@@ -130,7 +130,7 @@ def draw_plot(x,y,x_name,y_name,title_name,fig_name):
 ##### User Define
 n_batch = 2
 pts_range = 10
-data_type = "gaussion"
+data_type = "uniformly"
 max_n_clusters = 8
 max_dim_points = 8
 num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800,2000,2300,2500,3000,4000,6000,8000]
@@ -189,8 +189,14 @@ elif data_type=="uniformly":
         title_type = data_type + " distributed points in " + str(dim_point) + "D: "
         title_name1 = title_type + "#bars v.s. #simplices"
         title_name2 = title_type + "#vertices v.s. #simplices"
+        title_name3 = title_type + "#vertices v.s. sqrt(#simplices)"
         fig_name1 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-simplices"
         fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-vertices"
+        fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)"
 
+        n_simplices_array = np.array(n_simplices)
+        sqrt_n_simplices = np.sqrt(n_simplices_array)
+        sqrt_n_simplices_list = list(sqrt_n_simplices)
         draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
         draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
+        draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
