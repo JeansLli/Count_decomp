@@ -2,8 +2,8 @@
 This repository is based on [Persistable](https://github.com/LuisScoccola/persistable).
 
 First, complile the Cython code
-cd persistable
 ```
+cd persistable
 python setup.py build_ext --inplace
 ```
 
