@@ -85,11 +85,14 @@ def run_experiments(n_batch, x_range, y_range, num_points, ss, ks):
         filtered_points, filtered_edges =  filter_graph(points, edges, min_degree)
         num_filtered_points = filtered_points.shape[0]
         simplex_tree = gd.SimplexTree()
+        for pts_id in range(num_filtered_points):
+            simplex_tree.insert([pts_id])
         for edge in filtered_edges:
             simplex_tree.insert(edge)
         
         simplex_tree.expansion(num_filtered_points) # expand edges to Rips Complex
-
+        #if simplex_tree.num_simplices()==0:
+        #    pdb.set_trace()
         n_filter_pts.append(num_filtered_points)
         n_simplies.append(simplex_tree.num_simplices())
     return n_filter_pts, n_simplies, n_signed_bars
@@ -108,7 +111,7 @@ def draw_plot(x,y,x_name,y_name,line_k,time,title_name):
     plt.ylabel(y_name)
     # Draw the line y=x
     if (ymax-ymin)<(xmax-xmin):
-        line_x = np.linspace(ymin, ymax, 100)
+        line_x = np.linspace(ymin/line_k, ymax/line_k, 100)
     else:
         line_x = np.linspace(ymin/line_k, xmax, 100)
     plt.plot(line_x, line_k*line_x, 'k--', color='red', label='y = '+str(line_k)+'x')
@@ -118,15 +121,20 @@ def draw_plot(x,y,x_name,y_name,line_k,time,title_name):
 
     #plt.grid(True)
     fig_name = time+'_'+x_name+'_'+y_name
-    plt.savefig("../experiment_result/"+fig_name)
+    plt.savefig("../experiment_result_v1/"+fig_name)
     plt.show()
 
-x_range=10
-y_range=10
-num_points=20
-ss = [0, 0.5, 1, 1.5, 2, 2.5, 3,10] #radius_scale
-ks = [1, 3 / 4, 1 / 2,1/4,0] #degree
-n_filter_pts, n_simplices, n_signed_bars = run_experiments(500, x_range, y_range, num_points, ss, ks)
+x_range = 10
+y_range = 10
+num_points = 15
+ss = [0, 1, 1.5, 2, 2.5, 3, 3.5] #radius_scale
+ks = [1, 3 / 4, 1 / 2, 1 / 4, 0] #degree
+n_filter_pts, n_simplices, n_signed_bars = run_experiments(50, x_range, y_range, num_points, ss, ks)
+print("n_simplices = ",n_simplices)
+print("n_signed_bars = ",n_signed_bars)
+print("n_filter_pts",n_filter_pts)
+
+
 
 max_radius = ss[-1]
 min_degree = ks[-1]*num_points-1
@@ -149,5 +157,5 @@ n_simplices_array = np.array(n_simplices)
 log_n_simplices = np.log(n_simplices_array)
 log_n_simplices_list = list(log_n_simplices)
 
-draw_plot(log_n_simplices_list,n_signed_bars,'log(n_simplices)','n_bars',5, time_string,title_name)
+#draw_plot(log_n_simplices_list,n_signed_bars,'log(n_simplices)','n_bars',5, time_string,title_name)
 
