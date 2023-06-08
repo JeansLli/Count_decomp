@@ -2,14 +2,11 @@
 This repository is based on [Persistable](https://github.com/LuisScoccola/persistable).
 
 First, complile the Cython code
+cd persistable
 ```
 python setup.py build_ext --inplace
 ```
 
-Then 
-```
-cd persistable
-```
 
 ## The first version
 Create random points and build bifiltrations on them. Run
