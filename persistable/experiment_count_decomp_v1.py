@@ -52,10 +52,12 @@ def run_experiments(n_batch, x_range, y_range, num_points, ss, ks):
     n_filter_pts = []
     n_signed_bars = []
     n_simplies = []
+    n_pos_bars = []
+    n_neg_bars = []
     max_radius = ss[-1]
     min_degree = ks[-1]*num_points-1
 
-    for batch_id in range(n_batch):
+    for _ in range(n_batch):
         # Create random points
         points = create_random_points(x_range,y_range,num_points)
 
@@ -68,6 +70,8 @@ def run_experiments(n_batch, x_range, y_range, num_points, ss, ks):
         num_neg_bar = -sb[sb<0].sum()
         num_bars = num_pos_bar + num_neg_bar
         n_signed_bars.append(num_bars)
+        n_pos_bars.append(num_pos_bar)
+        n_neg_bars.append(num_neg_bar)
 
         # Compute the maximal simplicial complex
         
@@ -93,11 +97,17 @@ def run_experiments(n_batch, x_range, y_range, num_points, ss, ks):
             simplex_tree.insert(edge)
         
         simplex_tree.expansion(num_filtered_points) # expand edges to Rips Complex
-        #if simplex_tree.num_simplices()==0:
-        #    pdb.set_trace()
+        # if simplex_tree.num_simplices() < num_bars:
+        #     fmt = '%s -> %.2f'
+        #     print("simplex tree is ")
+        #     for filtered_value in simplex_tree.get_filtration():
+        #         print(fmt % tuple(filtered_value))
+        #     print("hilbert function\n",hf)
+        #     print("signed betti bars\n",sb)
+        #     pdb.set_trace()
         n_filter_pts.append(num_filtered_points)
         n_simplies.append(simplex_tree.num_simplices())
-    return n_filter_pts, n_simplies, n_signed_bars
+    return n_filter_pts, n_simplies, n_signed_bars, n_pos_bars, n_neg_bars
     
 
 def draw_plot(x,y,x_name,y_name,line_k,time,title_name):
@@ -131,10 +141,10 @@ y_range = 10
 num_points = 15
 ss = [0, 1, 1.5, 2, 2.5, 3, 3.5] #radius_scale
 ks = [1, 3 / 4, 1 / 2, 1 / 4, 0] #degree
-n_filter_pts, n_simplices, n_signed_bars = run_experiments(50, x_range, y_range, num_points, ss, ks)
-print("n_simplices = ",n_simplices)
-print("n_signed_bars = ",n_signed_bars)
-print("n_filter_pts",n_filter_pts)
+n_filter_pts, n_simplices, n_signed_bars,n_pos_bars, n_neg_bars = run_experiments(500, x_range, y_range, num_points, ss, ks)
+#print("n_simplices = ",n_simplices)
+#print("n_signed_bars = ",n_signed_bars)
+#print("n_filter_pts",n_filter_pts)
 
 
 
@@ -153,7 +163,10 @@ print("title_name=",title_name)
 
 
 draw_plot(n_simplices,n_signed_bars,'n_simplices','n_bars',1, time_string,title_name)
+draw_plot(n_simplices,n_pos_bars,'n_simplices','n_pos_bars',1, time_string,title_name)
+draw_plot(n_simplices,n_neg_bars,'n_simplices','n_neg_bars',1, time_string,title_name)
 draw_plot(n_filter_pts, n_signed_bars, 'n_pts','n_bars',3, time_string,title_name)
+
 
 n_simplices_array = np.array(n_simplices)
 log_n_simplices = np.log(n_simplices_array)

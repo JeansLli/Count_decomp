@@ -115,6 +115,10 @@ num_filtered_points = filtered_points.shape[0]
 
 
 simplex_tree = gd.SimplexTree()
+# first add points
+for pts_id in range(num_filtered_points):
+    simplex_tree.insert([pts_id])
+# then add edges
 for edge in filtered_edges:
     simplex_tree.insert(edge)
 simplex_tree.expansion(filtered_points.shape[0])

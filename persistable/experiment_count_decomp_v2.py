@@ -125,13 +125,13 @@ def draw_histogram(n_signed_bars, num_points, n_simplices,time,n_batch,ss,ks):
 
 x_range=10
 y_range=10
-num_points=10
+num_points=25
 n_batch=500
 #ss = [0, 0.5, 1 ,2, 3, 5,6, 8, 10,11, 13,15,17, 18, 20] #radius_scale
 #ks = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1,0] #degree
 
-ss = np.linspace(0, 20, 80)
-ks = np.linspace(1, 0, 5)
+ss = np.linspace(0, 20, 10)
+ks = np.linspace(1, 0, 10)
 n_signed_bars = run_experiments(n_batch, x_range, y_range, num_points, ss, ks)
 #print("n_filter_pts=",n_filter_pts)
 #print("n_simplices=",n_simplices)
