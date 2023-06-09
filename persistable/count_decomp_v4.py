@@ -5,9 +5,12 @@ import pdb
 import networkx as nx
 import gudhi as gd
 
+import persistable
 from persistable import Persistable
 from persistable.persistable import _HierarchicalClustering, _MetricSpace
 from persistable.signed_betti_numbers import signed_betti
+from sklearn.metrics import DistanceMetric
+
 
 def creat_random_points(x_range,y_range,N):
     # output is a (N,2) array
@@ -15,6 +18,56 @@ def creat_random_points(x_range,y_range,N):
     points[:,0]=points[:,0] * x_range
     points[:,1]=points[:,1] * y_range
     return points
+
+def hf_degree_rips(
+    distance_matrix,
+    min_rips_value,
+    max_rips_value,
+    max_normalized_degree,
+    min_normalized_degree,
+    grid_granularity,
+    max_homological_dimension,
+    subsample_size = None,
+):
+    if subsample_size == None:
+        p = persistable.Persistable(distance_matrix, metric="precomputed")
+    else:
+        p = persistable.Persistable(distance_matrix, metric="precomputed", subsample=subsample_size)
+
+    rips_values, normalized_degree_values, hilbert_functions, minimal_hilbert_decompositions = p._hilbert_function(
+        min_rips_value,
+        max_rips_value,
+        max_normalized_degree,
+        min_normalized_degree,
+        grid_granularity,
+        homological_dimension=max_homological_dimension,
+    )
+    print("higher degree hilbert_functions:\n",hilbert_functions)
+    print("higher degree minimal_hilbert_decompositions:\n",minimal_hilbert_decompositions)
+    return rips_values, normalized_degree_values, hilbert_functions, minimal_hilbert_decompositions
+
+
+
+def hf_h0_degree_rips(
+    point_cloud,
+    min_rips_value,
+    max_rips_value,
+    max_normalized_degree,
+    min_normalized_degree,
+    grid_granularity,
+):
+    p = persistable.Persistable(point_cloud, n_neighbors="all")
+
+    rips_values, normalized_degree_values, hilbert_functions, minimal_hilbert_decompositions = p._hilbert_function(
+        min_rips_value,
+        max_rips_value,
+        max_normalized_degree,
+        min_normalized_degree,
+        grid_granularity,
+    )
+    print("degree 0 hilbert_functions:\n",hilbert_functions[0])
+    print("degree 0 minimal hilbert decomposition:\n",minimal_hilbert_decompositions[0])
+    return rips_values, normalized_degree_values, hilbert_functions[0], minimal_hilbert_decompositions[0] 
 
 
 def filter_graph(points, edges, s):
@@ -31,16 +84,12 @@ def filter_graph(points, edges, s):
 
     # List of nodes to be removed
     nodes_to_remove = [node for node, degree in dict(G.degree()).items() if degree < s]
-
     # Remove nodes
     G.remove_nodes_from(nodes_to_remove)
-
     # Create a dictionary of remaining nodes and their coordinates
     remaining_points = np.array([data['coordinate'] for node, data in G.nodes(data=True)])
-    
     # Create a map of old indices to new indices
     old_to_new_indices = {old_idx: new_idx for new_idx, old_idx in enumerate(G.nodes)}
-
     # Create a numpy array of remaining edges with new indices
     remaining_edges = np.array([(old_to_new_indices[u], old_to_new_indices[v]) for u, v in G.edges()])
     return remaining_points, remaining_edges
@@ -49,10 +98,23 @@ def filter_graph(points, edges, s):
 
 
 # Create the data
-num_points = 20
+num_points = 40
 x_range = 10
 y_range = 10
 points = creat_random_points(x_range,y_range,num_points)
+
+min_rips_value=0
+max_rips_value=10
+max_normalized_degree=1
+min_normalized_degree=0
+grid_granularity=8
+max_homological_dimension=3
+
+
+
+
+dist = DistanceMetric.get_metric('minkowski')
+distance_matrix = dist.pairwise(points)
 
 # Plot the data
 plt.figure(figsize=(10,10))
@@ -60,20 +122,18 @@ plt.scatter(points[:,0], points[:,1], alpha=0.5)
 plt.show()
 
 
-# Compute the hilbert function
-ss = [0,1,3,5,7,9,11] #radius_scale
-ks = [1, 3 / 4, 1 / 2, 1/4, 0] #degree
+ss = [ 0.  ,  3.75,  7.5 , 11.25, 15.  ] #radius_scale
+ks = [1.  , 0.75, 0.5 , 0.25, 0.  ] #degree
 
-p = Persistable(points)
-bf = p._bifiltration
-hf = bf._hilbert_function(ss, ks, reduced=False, n_jobs=4)
-print("hilbert function=\n", hf)
+homology_degree=1
+rips_values, normalized_degree_values, hilbert_functions, minimal_hilbert_decompositions=hf_degree_rips(distance_matrix, min_rips_value,max_rips_value,max_normalized_degree,min_normalized_degree,grid_granularity,max_homological_dimension)
+#pdb.set_trace()
 
-# Compute the signed Betti barcode
-sb = signed_betti(hf)
-print("signed Betti barcode=\n",sb)
+#hf_h0_degree_rips(points,ss[0],ss[-1],ks[0],ks[-1],5)
 
 
+sb = minimal_hilbert_decompositions[max_homological_dimension]
+hf = hilbert_functions[max_homological_dimension]
 
 check = np.zeros(hf.shape)
 for i in range(hf.shape[0]):
@@ -118,15 +178,15 @@ num_filtered_points = filtered_points.shape[0]
 
 simplex_tree = gd.SimplexTree()
 # first add points
-for pts_id in range(num_filtered_points):
+for pts_id in range(num_points):
     simplex_tree.insert([pts_id])
 # then add edges
-for edge in filtered_edges:
+for edge in edges:
     simplex_tree.insert(edge)
-simplex_tree.expansion(filtered_points.shape[0])
+simplex_tree.expansion(max_homological_dimension+1)
 
 
-fmt = '%s -> %.2f'
+#fmt = '%s -> %.2f'
 #print("simplex tree is ")
 #for filtered_value in simplex_tree.get_filtration():
 #    print(fmt % tuple(filtered_value))
@@ -137,13 +197,13 @@ result_str = 'Rips complex is of dimension ' + repr(simplex_tree.dimension()) + 
     repr(simplex_tree.num_simplices()) + ' simplices - ' + \
     repr(simplex_tree.num_vertices()) + ' vertices.'
 print(result_str)
-print("filtered_points.shape ",filtered_points.shape)
-print("filtered_edges.shape ",filtered_edges.shape)
-cnt=0
-for simplex in simplex_tree.get_skeleton(1):
-    if len(simplex[0]) == 2:  # only print simplices with 2 vertices (edges)
-        cnt+=1
-print("num edges = ",cnt)
+#print("filtered_points.shape ",filtered_points.shape)
+#print("filtered_edges.shape ",filtered_edges.shape)
+#cnt=0
+#for simplex in simplex_tree.get_skeleton(1):
+#    if len(simplex[0]) == 2:  # only print simplices with 2 vertices (edges)
+#        cnt+=1
+#print("num edges = ",cnt)
 
 
 

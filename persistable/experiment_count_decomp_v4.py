@@ -4,6 +4,7 @@ import gudhi as gd
 import pdb
 import networkx as nx
 
+import persistable
 from persistable import Persistable
 from persistable.persistable import _HierarchicalClustering, _MetricSpace
 from persistable.signed_betti_numbers import signed_betti
@@ -78,16 +79,45 @@ def create_Gaussian_points(dim,pts_range,N,n_clusters):
     points = points * pts_range
     return points
 
+def hf_degree_rips(
+    distance_matrix,
+    min_rips_value,
+    max_rips_value,
+    max_normalized_degree,
+    min_normalized_degree,
+    grid_granularity,
+    max_homological_dimension,
+    subsample_size = None,
+):
+    if subsample_size == None:
+        p = persistable.Persistable(distance_matrix, metric="precomputed")
+    else:
+        p = persistable.Persistable(distance_matrix, metric="precomputed", subsample=subsample_size)
+
+    rips_values, normalized_degree_values, hilbert_functions, minimal_hilbert_decompositions = p._hilbert_function(
+        min_rips_value,
+        max_rips_value,
+        max_normalized_degree,
+        min_normalized_degree,
+        grid_granularity,
+        homological_dimension=max_homological_dimension,
+    )
+    #print("higher degree hilbert_functions:\n",hilbert_functions)
+    #print("higher degree minimal_hilbert_decompositions:\n",minimal_hilbert_decompositions)
+    return rips_values, normalized_degree_values, hilbert_functions, minimal_hilbert_decompositions
 
 
-def run_experiments(n_batch, dim_point, pts_range, num_points, data_type, n_clusters, ss, ks):
+
+    
+def run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, data_type, n_clusters, min_radius,max_radius, max_degree,min_degree,grid_granularity,max_homological_dimension):
     n_signed_bars = []
     n_simplices = []
     n_vertices = []
 
     for num_point in num_points:
-        for _ in range(n_batch):
-
+        for batch_id in range(n_batch):
+            print("num_point=",num_point)
+            print("batch_id=",batch_id)
             # Create points
             if data_type=="uniform":
                 points = create_uniformly_distributed_points(dim_point,pts_range, num_point)
@@ -96,21 +126,27 @@ def run_experiments(n_batch, dim_point, pts_range, num_points, data_type, n_clus
             elif data_type=="gaussian":
                 points = create_Gaussian_points(dim_point,pts_range, num_point,n_clusters)
 
-
+            dist = DistanceMetric.get_metric('minkowski')
+            distance_matrix = dist.pairwise(points)
             # Compute the signed Betti barcode
-            p = Persistable(points,metric="minkowski")
-            bf = p._bifiltration
-            hf = bf._hilbert_function(ss, ks, reduced=False, n_jobs=4)
-            sb = signed_betti(hf[0])[0]
+            rips_values, normalized_degree_values, hilbert_functions, minimal_hilbert_decompositions=hf_degree_rips(distance_matrix, min_radius,max_radius,max_degree,min_degree,grid_granularity,max_homological_dimension)
+            #pdb.set_trace()
+            sb = minimal_hilbert_decompositions[max_homological_dimension]
+            #hf = hilbert_functions[max_homological_dimension]
+            
             num_pos_bar = sb[sb>0].sum()
             num_neg_bar = -sb[sb<0].sum()
             num_bars = num_pos_bar + num_neg_bar
-            n_signed_bars.append(num_bars)
-            n_simplices.append(num_point+num_point*(num_point-1)/2)
+
+            num_simplice = 0
+            for k in range(max_homological_dimension+1, max_homological_dimension+3):
+                num_simplice+=math.comb(num_point, k)
+
+            n_signed_bars.append(num_bars)    
+            n_simplices.append(num_simplice)
             n_vertices.append(num_point)
 
     return n_signed_bars, n_simplices, n_vertices
-    
 
 def draw_plot(x,y,x_name,y_name,title_name,fig_name):
     plt.figure(figsize=(10, 8))
@@ -123,18 +159,23 @@ def draw_plot(x,y,x_name,y_name,title_name,fig_name):
     plt.title(title_name)
 
     plt.grid(True)
-    plt.savefig("../experiment_result_v3/"+fig_name)
+    plt.savefig("../experiment_result_v4/"+fig_name)
     #plt.show()
 
 
 ##### User Define
-n_batch = 2
+n_batch = 1
 pts_range = 10
 data_type = "torus"
 max_n_clusters = 8
 max_dim_points = 8
-#num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800,2000,2300,2500,3000,4000,6000,8000]
-num_points=[10,20,30,40,60,70,80,90,100,110,120]
+max_degree = 1
+min_degree = 0
+min_radius = 0
+grid_granularity = 10
+max_homological_dimension = 1
+num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800]
+#num_points=[10,20,30,40,60,70,80,90,100,110,120]
 ######
 
 dist = DistanceMetric.get_metric('minkowski')
@@ -146,46 +187,43 @@ if data_type == "torus":
     dim_point = 3
     max_radius = (dist.pairwise([np.zeros(dim_point),np.ones(dim_point)*pts_range])[0,1]+1)/2
 
-    ss = np.linspace(0, max_radius, 10) #radius
-    ks = np.linspace(1, 0, 10) #degree
-
-    n_signed_bars, n_simplices, n_vertices = run_experiments(n_batch, dim_point, pts_range, num_points, data_type, n_clusters,ss, ks)
+    n_signed_bars, n_simplices, n_vertices = run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, data_type, n_clusters, min_radius,max_radius, max_degree,min_degree,grid_granularity,max_homological_dimension)
 
     title_type = data_type + " distributed points in " + str(dim_point) + "D: "
-    title_name1 = title_type + "#bars v.s. #simplices"
-    title_name2 = title_type + "#vertices v.s. #simplices"
-    title_name3 = title_type + "#vertices v.s. sqrt(#simplices)"
+    title_name1 = title_type + "#bars v.s. #simplices, degree "+str(max_homological_dimension)
+    title_name2 = title_type + "#vertices v.s. #simplices, degree "+str(max_homological_dimension)
+    title_name3 = title_type + "#vertices v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
 
-    fig_name1 = data_type + "/" + data_type+"_" + str(dim_point) + "D_bars-simplices"
-    fig_name2 = data_type + "/" + data_type+"_" + str(dim_point) + "D_bars-vertices"
-    fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)"
+    fig_name1 = data_type + "/" + data_type+"_" + str(dim_point) + "D_bars-simplices_degree_"+str(max_homological_dimension)
+    fig_name2 = data_type + "/" + data_type+"_" + str(dim_point) + "D_bars-vertices_degree_"+str(max_homological_dimension)
+    fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)_degree_"+str(max_homological_dimension)
 
 
     n_simplices_array = np.array(n_simplices)
-    sqrt_n_simplices = np.sqrt(n_simplices_array)
-    sqrt_n_simplices_list = list(sqrt_n_simplices)
+    sbrt_n_simplices = np.cbrt(n_simplices_array)
+    cbrt_n_simplices_list = list(sbrt_n_simplices)
+    
 
     draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
     draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
-    draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
+    draw_plot(cbrt_n_simplices_list, n_signed_bars, 'cbrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
+    pdb.set_trace()
 
 
 elif data_type== "gaussian":
     for n_clusters in range(1,max_n_clusters):
         for dim_point in range(1,max_dim_points):
             max_radius = (dist.pairwise([np.zeros(dim_point),np.ones(dim_point)*pts_range])[0,1]+1)/2
-            ss = np.linspace(0, max_radius, 10) #radius
-            ks = np.linspace(1, 0, 10) #degree
 
-            n_signed_bars, n_simplices, n_vertices = run_experiments(n_batch, dim_point, pts_range, num_points, data_type, n_clusters,ss, ks)
+            n_signed_bars, n_simplices, n_vertices = run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, data_type, n_clusters, min_radius,max_radius, max_degree,min_degree,grid_granularity,max_homological_dimension)
             title_type = data_type + " distributed points in " + str(dim_point) + "D: "
             title_type = str(n_clusters) + " clusters " + title_type
-            title_name1 = title_type + "#bars v.s. #simplices"
-            title_name2 = title_type + "#vertices v.s. #simplices"
-            title_name3 = title_type + "#vertices v.s. sqrt(#simplices)"
-            fig_name1 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-simplices"
-            fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-vertices"
-            fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-sqrt(n_simplices)"
+            title_name1 = title_type + "#bars v.s. #simplices, degree "+str(max_homological_dimension)
+            title_name2 = title_type + "#vertices v.s. #simplices, degree "+str(max_homological_dimension)
+            title_name3 = title_type + "#vertices v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
+            fig_name1 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-simplices_degree_"+str(max_homological_dimension)
+            fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-vertices_degree_"+str(max_homological_dimension)
+            fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-sqrt(n_simplices)_degree_"+str(max_homological_dimension)
             
             n_simplices_array = np.array(n_simplices)
             sqrt_n_simplices = np.sqrt(n_simplices_array)
@@ -199,17 +237,15 @@ elif data_type== "gaussian":
 elif data_type=="uniform":
     for dim_point in range(1,max_dim_points):
         max_radius = (dist.pairwise([np.zeros(dim_point),np.ones(dim_point)*pts_range])[0,1]+1)/2
-        ss = np.linspace(0, max_radius, 10) #radius
-        ks = np.linspace(1, 0, 10) #degree
 
-        n_signed_bars, n_simplices, n_vertices = run_experiments(n_batch, dim_point, pts_range, num_points, data_type, n_clusters,ss, ks)
+        n_signed_bars, n_simplices, n_vertices = run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, data_type, n_clusters, min_radius,max_radius, max_degree,min_degree,grid_granularity,max_homological_dimension)
         title_type = data_type + " distributed points in " + str(dim_point) + "D: "
-        title_name1 = title_type + "#bars v.s. #simplices"
-        title_name2 = title_type + "#vertices v.s. #simplices"
-        title_name3 = title_type + "#vertices v.s. sqrt(#simplices)"
-        fig_name1 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-simplices"
-        fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-vertices"
-        fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)"
+        title_name1 = title_type + "#bars v.s. #simplices, degree "+str(max_homological_dimension)
+        title_name2 = title_type + "#vertices v.s. #simplices, degree "+str(max_homological_dimension)
+        title_name3 = title_type + "#vertices v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
+        fig_name1 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-simplices_degree_"+str(max_homological_dimension)
+        fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-vertices_degree_"+str(max_homological_dimension)
+        fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)_degree_"+str(max_homological_dimension)
 
         n_simplices_array = np.array(n_simplices)
         sqrt_n_simplices = np.sqrt(n_simplices_array)
