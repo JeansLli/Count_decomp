@@ -1,11 +1,12 @@
 # Count_decomp
 This repository is based on [Persistable](https://github.com/LuisScoccola/persistable).
 
-First, complile the Cython code
+First, complile the Cython code if you want to run the orignal Persistable code.
 ```
 cd persistable
 python setup.py build_ext --inplace
 ```
+
 
 
 ## The first version

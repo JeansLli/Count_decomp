@@ -61,8 +61,24 @@ def generate_clustered_points(N, d, c, cluster_std_dev):
     #print("max_values=",max_values)
     # Normalize the points so they fall within the range [0, 1]
     normalized_points = (points - min_values) / (max_values - min_values)
+    return normalized_points
+
+def generate_hypersphere_points(N, k,radius=1):
+    # Generate N k-dimensional Gaussian random vectors
+    points = np.random.normal(size=(N, k))
+
+    # Normalize each point to the hypersphere of given radius
+    points /= np.linalg.norm(points, axis=1)[:, np.newaxis]
+    points *= radius
+    min_values = np.min(points, axis=0)
+    max_values = np.max(points, axis=0)
+
+    # Normalize the points so they fall within the range [0, 1]
+    normalized_points = (points - min_values) / (max_values - min_values)
 
     return normalized_points
+
+
 
 def create_uniformly_distributed_points(dim,pts_range,N):
     # output is a (N,2) array
@@ -78,6 +94,12 @@ def create_Gaussian_points(dim,pts_range,N,n_clusters):
     points = generate_clustered_points(N, dim, n_clusters, 0.05)
     points = points * pts_range
     return points
+
+def create_sphere_points(dim,pts_range,N):
+    points = generate_hypersphere_points(N,dim)
+    points = points * pts_range
+    return points
+
 
 def hf_degree_rips(
     distance_matrix,
@@ -116,8 +138,6 @@ def run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, d
 
     for num_point in num_points:
         for batch_id in range(n_batch):
-            print("num_point=",num_point)
-            print("batch_id=",batch_id)
             # Create points
             if data_type=="uniform":
                 points = create_uniformly_distributed_points(dim_point,pts_range, num_point)
@@ -125,6 +145,8 @@ def run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, d
                 points = create_torus_points(pts_range, num_point)
             elif data_type=="gaussian":
                 points = create_Gaussian_points(dim_point,pts_range, num_point,n_clusters)
+            elif data_type=="sphere":
+                points = create_sphere_points(dim_point,pts_range,num_point)
 
             dist = DistanceMetric.get_metric('minkowski')
             distance_matrix = dist.pairwise(points)
@@ -164,18 +186,20 @@ def draw_plot(x,y,x_name,y_name,title_name,fig_name):
 
 
 ##### User Define
-n_batch = 1
+n_batch = 5
 pts_range = 10
-data_type = "torus"
-max_n_clusters = 8
-max_dim_points = 8
+data_type = "sphere"
+max_n_clusters = 5
+max_dim_points = 5
 max_degree = 1
 min_degree = 0
 min_radius = 0
 grid_granularity = 10
-max_homological_dimension = 1
-num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800]
-#num_points=[10,20,30,40,60,70,80,90,100,110,120]
+max_homological_dimension = 2
+#num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800]
+#num_points=[10,20,30,40,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]
+num_points=np.arange(10,200,5)
+print("num_points=",num_points)
 ######
 
 dist = DistanceMetric.get_metric('minkowski')
@@ -198,16 +222,14 @@ if data_type == "torus":
     fig_name2 = data_type + "/" + data_type+"_" + str(dim_point) + "D_bars-vertices_degree_"+str(max_homological_dimension)
     fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)_degree_"+str(max_homological_dimension)
 
-
     n_simplices_array = np.array(n_simplices)
     sbrt_n_simplices = np.cbrt(n_simplices_array)
     cbrt_n_simplices_list = list(sbrt_n_simplices)
-    
 
     draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
     draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
-    draw_plot(cbrt_n_simplices_list, n_signed_bars, 'cbrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
-    pdb.set_trace()
+    #draw_plot(cbrt_n_simplices_list, n_signed_bars, 'cbrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
+    #pdb.set_trace()
 
 
 elif data_type== "gaussian":
@@ -231,10 +253,10 @@ elif data_type== "gaussian":
 
             draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
             draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
-            draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
+            #draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
 
              
-elif data_type=="uniform":
+elif data_type=="uniform" or "sphere":
     for dim_point in range(1,max_dim_points):
         max_radius = (dist.pairwise([np.zeros(dim_point),np.ones(dim_point)*pts_range])[0,1]+1)/2
 
@@ -252,4 +274,5 @@ elif data_type=="uniform":
         sqrt_n_simplices_list = list(sqrt_n_simplices)
         draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
         draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
-        draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
+        #draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
+
