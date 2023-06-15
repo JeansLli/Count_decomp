@@ -26,10 +26,10 @@ def generate_torus_points(N, R, r, noise_std_dev):
     return np.column_stack([x, y, z])
 
 # Usage:
-N = 1000  # number of points
+N = 500  # number of points
 R = 1  # distance from the center of the tube to the center of the torus
 r = 0.1  # radius of the tube (distance from the center of the tube to the torus surface)
-noise_std_dev = 0.05  # standard deviation of the Gaussian noise
+noise_std_dev = 0.01  # standard deviation of the Gaussian noise
 pts_range = 10
 # Generate the points
 points = generate_torus_points(N, R, r, noise_std_dev)

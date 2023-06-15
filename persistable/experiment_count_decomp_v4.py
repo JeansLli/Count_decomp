@@ -15,7 +15,7 @@ from sklearn.metrics import DistanceMetric
 
 
 
-def generate_torus_points(N, R, r, noise_std_dev):
+def generate_torus_points(N, R, r, noise_std_dev=0.1):
     # Generate N uniform random angles for the circle and tube
     theta = 2 * np.pi * np.random.rand(N)  # angle for the circle
     phi = 2 * np.pi * np.random.rand(N)  # angle for the tube
@@ -63,17 +63,21 @@ def generate_clustered_points(N, d, c, cluster_std_dev):
     normalized_points = (points - min_values) / (max_values - min_values)
     return normalized_points
 
-def generate_hypersphere_points(N, k,radius=1):
+def generate_hypersphere_points(N, k, radius=1, noise_std_dev=0.1):
     # Generate N k-dimensional Gaussian random vectors
     points = np.random.normal(size=(N, k))
 
     # Normalize each point to the hypersphere of given radius
     points /= np.linalg.norm(points, axis=1)[:, np.newaxis]
     points *= radius
-    min_values = np.min(points, axis=0)
-    max_values = np.max(points, axis=0)
+
+    # Add Gaussian noise to the points
+    noise = np.random.normal(scale=noise_std_dev, size=(N, k))
+    points += noise
 
     # Normalize the points so they fall within the range [0, 1]
+    min_values = np.min(points, axis=0)
+    max_values = np.max(points, axis=0)
     normalized_points = (points - min_values) / (max_values - min_values)
 
     return normalized_points
@@ -86,8 +90,14 @@ def create_uniformly_distributed_points(dim,pts_range,N):
     return points
 
 def create_torus_points(pts_range,N):
-    points = generate_torus_points(N, 1, 0.1, 0.05)
+    points = generate_torus_points(N, 1, 0.1, 0)
     points = points * pts_range
+
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111, projection='3d')
+    #ax.scatter(points[:, 0], points[:, 1], points[:, 2])
+    #plt.show()
+
     return points
 
 def create_Gaussian_points(dim,pts_range,N,n_clusters):
@@ -138,6 +148,7 @@ def run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, d
 
     for num_point in num_points:
         for batch_id in range(n_batch):
+            print("processing "+str(num_point) +" points")
             # Create points
             if data_type=="uniform":
                 points = create_uniformly_distributed_points(dim_point,pts_range, num_point)
@@ -186,11 +197,11 @@ def draw_plot(x,y,x_name,y_name,title_name,fig_name):
 
 
 ##### User Define
-n_batch = 5
+n_batch = 2
 pts_range = 10
 data_type = "sphere"
 max_n_clusters = 5
-max_dim_points = 5
+max_dim_points = 4
 max_degree = 1
 min_degree = 0
 min_radius = 0
@@ -198,7 +209,7 @@ grid_granularity = 10
 max_homological_dimension = 2
 #num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800]
 #num_points=[10,20,30,40,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]
-num_points=np.arange(10,200,5)
+num_points=np.arange(100,2000,50)
 print("num_points=",num_points)
 ######
 
@@ -215,8 +226,8 @@ if data_type == "torus":
 
     title_type = data_type + " distributed points in " + str(dim_point) + "D: "
     title_name1 = title_type + "#bars v.s. #simplices, degree "+str(max_homological_dimension)
-    title_name2 = title_type + "#vertices v.s. #simplices, degree "+str(max_homological_dimension)
-    title_name3 = title_type + "#vertices v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
+    title_name2 = title_type + "#bars v.s. #vertices, degree "+str(max_homological_dimension)
+    title_name3 = title_type + "#bars v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
 
     fig_name1 = data_type + "/" + data_type+"_" + str(dim_point) + "D_bars-simplices_degree_"+str(max_homological_dimension)
     fig_name2 = data_type + "/" + data_type+"_" + str(dim_point) + "D_bars-vertices_degree_"+str(max_homological_dimension)
@@ -241,8 +252,8 @@ elif data_type== "gaussian":
             title_type = data_type + " distributed points in " + str(dim_point) + "D: "
             title_type = str(n_clusters) + " clusters " + title_type
             title_name1 = title_type + "#bars v.s. #simplices, degree "+str(max_homological_dimension)
-            title_name2 = title_type + "#vertices v.s. #simplices, degree "+str(max_homological_dimension)
-            title_name3 = title_type + "#vertices v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
+            title_name2 = title_type + "#bars v.s. #vertices, degree "+str(max_homological_dimension)
+            title_name3 = title_type + "#bars v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
             fig_name1 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-simplices_degree_"+str(max_homological_dimension)
             fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-vertices_degree_"+str(max_homological_dimension)
             fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_"+str(n_clusters)+"_clusters_bars-sqrt(n_simplices)_degree_"+str(max_homological_dimension)
@@ -257,14 +268,14 @@ elif data_type== "gaussian":
 
              
 elif data_type=="uniform" or "sphere":
-    for dim_point in range(1,max_dim_points):
+    for dim_point in range(3,max_dim_points):
         max_radius = (dist.pairwise([np.zeros(dim_point),np.ones(dim_point)*pts_range])[0,1]+1)/2
 
         n_signed_bars, n_simplices, n_vertices = run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, data_type, n_clusters, min_radius,max_radius, max_degree,min_degree,grid_granularity,max_homological_dimension)
         title_type = data_type + " distributed points in " + str(dim_point) + "D: "
         title_name1 = title_type + "#bars v.s. #simplices, degree "+str(max_homological_dimension)
-        title_name2 = title_type + "#vertices v.s. #simplices, degree "+str(max_homological_dimension)
-        title_name3 = title_type + "#vertices v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
+        title_name2 = title_type + "#bars v.s. #vertices, degree "+str(max_homological_dimension)
+        title_name3 = title_type + "#bars v.s. sqrt(#simplices), degree "+str(max_homological_dimension)
         fig_name1 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-simplices_degree_"+str(max_homological_dimension)
         fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-vertices_degree_"+str(max_homological_dimension)
         fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)_degree_"+str(max_homological_dimension)
