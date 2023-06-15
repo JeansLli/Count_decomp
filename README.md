@@ -1,25 +1,28 @@
 # Count_decomp
 This repository is based on [Persistable](https://github.com/LuisScoccola/persistable).
 
-First, complile the Cython code if you want to run the orignal Persistable code.
+First, install Persistable:
+```
+pip install git+https://github.com/LuisScoccola/persistable.git@higher-homology
+```
+Then 
 ```
 cd persistable
-python setup.py build_ext --inplace
 ```
 
 
 
-## The first version
-Create random points and build bifiltrations on them. Run
+## v3
+Do experiments for 0th homology:
 ```
-python experiment_count_decomp_v1.py
+python experiment_count_decomp_v3.py
 
 ```
-The results are stored in `path-to-repository/experiment_result_v1`
+The results are stored in `path-to-repository/experiment_result_v3`
 
-## The second version 
-Fix a simplicial complex (complete graph with n vertices) and build different bifiltrations on it. Run
+## v4 
+Do experiments for higher homology:
 ```
-python experiment_count_decomp_v2.py
+python experiment_count_decomp_v4.py
 ```
-The results are stored in `path-to-repository/experiment_result_v2`
+The results are stored in `path-to-repository/experiment_result_v4`
