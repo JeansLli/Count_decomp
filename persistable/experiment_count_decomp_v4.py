@@ -199,14 +199,14 @@ def draw_plot(x,y,x_name,y_name,title_name,fig_name):
 ##### User Define
 n_batch = 2
 pts_range = 10
-data_type = "sphere"
+data_type = "uniform"
 max_n_clusters = 5
 max_dim_points = 4
 max_degree = 1
 min_degree = 0
 min_radius = 0
 grid_granularity = 10
-max_homological_dimension = 2
+max_homological_dimension = 0
 #num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800]
 #num_points=[10,20,30,40,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]
 num_points=np.arange(100,2000,50)

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import pdb
 
 def generate_clustered_points(N, d, c, cluster_std_dev):
     # Initialize an empty array to hold the points
@@ -29,9 +30,9 @@ def generate_clustered_points(N, d, c, cluster_std_dev):
 
 
 # Set the parameters
-N = 1000  # total number of points
-d = 3     # number of dimensions
-c = 4     # number of clusters
+N = 100  # total number of points
+d = 2     # number of dimensions
+c = 3     # number of clusters
 cluster_std_dev = 0.05  # standard deviation of Gaussian noise
 
 # Generate the points
@@ -47,14 +48,13 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
 # Scatter the points
-ax.scatter(points[:, 0], points[:, 1], points[:, 2])
+#ax.scatter(points[:, 0], points[:, 1], points[:, 2])
+ax.scatter(points[:, 0], points[:, 1], np.zeros(N-1))
 
 # Show the plot
 plt.show()
 
 
-# # Scatter the points
-# plt.scatter(points[:, 0], points[:, 1])
-
-# # Show the plot
-# plt.show()
+myFile = open('../Bimodules/data/GMM_100pts.txt', 'w')
+np.savetxt(myFile,points)
+myFile.close()
