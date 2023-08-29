@@ -147,7 +147,7 @@ def run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, d
     n_vertices = []
 
     for num_point in num_points:
-        for batch_id in range(n_batch):
+        for _ in range(n_batch):
             print("processing "+str(num_point) +" points")
             # Create points
             if data_type=="uniform":
@@ -172,8 +172,11 @@ def run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, d
             num_bars = num_pos_bar + num_neg_bar
 
             num_simplice = 0
+            temp=0
             for k in range(max_homological_dimension+1, max_homological_dimension+3):
-                num_simplice+=math.comb(num_point, k)
+                temp=math.comb(num_point, k)
+                num_simplice+=temp
+            num_simplice+=temp
 
             n_signed_bars.append(num_bars)    
             n_simplices.append(num_simplice)
@@ -192,27 +195,27 @@ def draw_plot(x,y,x_name,y_name,title_name,fig_name):
     plt.title(title_name)
 
     plt.grid(True)
-    plt.savefig("../experiment_result_v4/"+fig_name)
+    plt.savefig("../experiment_result_v5/"+fig_name)
     #plt.show()
 
 
 def draw_plot_ratio(x,y,x_name,y_name,title_name,fig_name):
     plt.figure(figsize=(10, 8))
-    plt.scatter(x, y)
+    plt.scatter(x, y/x)
 
     # Set x and y axis titles
     plt.xlabel(x_name)
-    plt.ylabel(y_name/x_name)
+    plt.ylabel(y_name+'/'+x_name)
+    #plt.axhline(y = 1, color = 'r', linestyle = '--')
 
     plt.title(title_name)
 
     plt.grid(True)
-    plt.savefig("../experiment_result_v4/"+fig_name)
+    plt.savefig("../experiment_result_v5/"+fig_name+"_ratio")
     #plt.show()
 
 
 ##### User Define
-n_batch = 2
 pts_range = 10
 data_type = "uniform"
 max_n_clusters = 5
@@ -224,8 +227,16 @@ grid_granularity = 10
 max_homological_dimension = 0
 #num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800]
 #num_points=[10,20,30,40,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]
-num_points=np.arange(100,1000,50)
-#num_points=np.arange(100,2000,50)
+#num_points=np.arange(100,1000,50)
+
+num_points=np.arange(5,105,5)
+n_batch = 5
+
+#num_points=np.arange(2,11,1)???
+#n_batch = 500
+
+#num_points=np.arange(3,11,1)
+#n_batch = 500
 print("num_points=",num_points)
 ######
 
@@ -252,11 +263,9 @@ if data_type == "torus":
     sbrt_n_simplices = np.cbrt(n_simplices)
     cbrt_n_simplices_list = list(sbrt_n_simplices)
 
-    #draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
-    draw_plot_ratio(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
-    #draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
-    #draw_plot(cbrt_n_simplices_list, n_signed_bars, 'cbrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
-    #pdb.set_trace()
+    draw_plot(n_simplices, n_signed_bars, 'n_k+2n_(k+1)','n_Hilbert_bars',title_name1,fig_name1)
+    draw_plot_ratio(n_simplices, n_signed_bars, 'n_k+2n_(k+1)','n_Hilbert_bars',title_name1,fig_name1)
+
 
 
 elif data_type== "gaussian":
@@ -277,13 +286,18 @@ elif data_type== "gaussian":
             sqrt_n_simplices = np.sqrt(n_simplices)
             sqrt_n_simplices_list = list(sqrt_n_simplices)
 
-            draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
-            draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
-            #draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
-
+            if max_homological_dimension==0:
+                draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
+            elif max_homological_dimension==1:
+                n_edges = n_vertices*(n_vertices-1)
+                title_name = title_type + "#bars v.s. #edges, degree "+str(max_homological_dimension)
+                fig_name = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-edges_degree_"+str(max_homological_dimension)
+                draw_plot(n_edges, n_signed_bars, 'n_edges','n_Hilbert_bars',title_name,fig_name)
+            
              
 elif data_type=="uniform" or "sphere":
-    for dim_point in range(3,max_dim_points):
+    for dim_point in range(2,max_dim_points):
+        print("dim_point=",dim_point)
         max_radius = (dist.pairwise([np.zeros(dim_point),np.ones(dim_point)*pts_range])[0,1]+1)/2
 
         n_signed_bars, n_simplices, n_vertices = run_experiments_higher_homology(n_batch, dim_point, pts_range, num_points, data_type, n_clusters, min_radius,max_radius, max_degree,min_degree,grid_granularity,max_homological_dimension)
@@ -295,9 +309,19 @@ elif data_type=="uniform" or "sphere":
         fig_name2 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-vertices_degree_"+str(max_homological_dimension)
         fig_name3 = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-sqrt(n_simplices)_degree_"+str(max_homological_dimension)
 
-        sqrt_n_simplices = np.sqrt(n_simplices)
-        sqrt_n_simplices_list = list(sqrt_n_simplices)
-        draw_plot(n_simplices,n_signed_bars,'n_simplices','n_Hilbert_bars',title_name1,fig_name1)
-        draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
-        #draw_plot(sqrt_n_simplices_list, n_signed_bars, 'sqrt_n_simplices','n_Hilbert_bars',title_name3,fig_name3)
+        n_edges = n_vertices*(n_vertices-1)
+        draw_plot(n_simplices, n_signed_bars, 'n_k+2n_(k+1)','n_Hilbert_bars',title_name1,fig_name1)
+        draw_plot_ratio(n_simplices, n_signed_bars, 'n_k+2n_(k+1)','n_Hilbert_bars',title_name1,fig_name1)
+
+        #if max_homological_dimension==0:
+        #    draw_plot(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
+        #    draw_plot_ratio(n_vertices, n_signed_bars, 'n_pts','n_Hilbert_bars',title_name2,fig_name2)
+        #elif max_homological_dimension==1:    
+        #    title_name = title_type + "#bars v.s. #edges, degree "+str(max_homological_dimension)
+        #    fig_name = data_type +"/" + data_type+"_" + str(dim_point) + "D_bars-edges_degree_"+str(max_homological_dimension)
+        #    draw_plot(n_edges, n_signed_bars, 'n_edges','n_Hilbert_bars',title_name,fig_name)
+        #    draw_plot_ratio(n_edges, n_signed_bars, 'n_edges','n_Hilbert_bars/n_simplicies',title_name,fig_name)
+
+
+
 
