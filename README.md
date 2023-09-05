@@ -26,3 +26,10 @@ Do experiments for higher homology:
 python experiment_count_decomp_v4.py
 ```
 The results are stored in `path-to-repository/experiment_result_v4`
+
+## v4 
+Do experiments for my report (more details):
+```
+python experiment_count_decomp_v5.py
+```
+The results are stored in `path-to-repository/experiment_result_v5`
