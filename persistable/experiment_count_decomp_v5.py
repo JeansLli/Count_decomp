@@ -219,12 +219,12 @@ def draw_plot_ratio(x,y,x_name,y_name,title_name,fig_name):
 pts_range = 10
 data_type = "uniform"
 max_n_clusters = 5
-max_dim_points = 5
+max_dim_points = 4
 max_degree = 1
 min_degree = 0
 min_radius = 0
 grid_granularity = 10
-max_homological_dimension = 0
+max_homological_dimension = 1
 #num_points=[10,20,30,40,60,80,100,200,400,600,800,1000,1400,1800]
 #num_points=[10,20,30,40,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]
 #num_points=np.arange(100,1000,50)
@@ -296,7 +296,7 @@ elif data_type== "gaussian":
             
              
 elif data_type=="uniform" or "sphere":
-    for dim_point in range(4,max_dim_points):
+    for dim_point in range(3,max_dim_points):
         print("dim_point=",dim_point)
         max_radius = (dist.pairwise([np.zeros(dim_point),np.ones(dim_point)*pts_range])[0,1]+1)/2
 
